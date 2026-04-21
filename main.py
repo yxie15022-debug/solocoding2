@@ -76,7 +76,16 @@ def print_human_readable(stats):
 
 
 def print_json(stats):
-    print(json.dumps(stats, ensure_ascii=False))
+    json_stats = stats.copy()
+    json_stats['extensions'] = [
+        {
+            'ext': ext_info['ext'],
+            'bytes': ext_info['bytes'],
+            'percentage': round(ext_info['percentage'], 2)
+        }
+        for ext_info in stats['extensions']
+    ]
+    print(json.dumps(json_stats, ensure_ascii=False))
 
 
 def main():
