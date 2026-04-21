@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+退出码规则:
+  0 - 成功（包括部分路径被跳过的情况）
+  1 - 根路径不存在或不是有效目录
+"""
 import argparse
 import json
 import os
@@ -16,6 +21,11 @@ def format_size(size_bytes):
     return f"{size:.2f} {units[unit_index]}"
 
 
+def handle_walk_error(exc):
+    error_path = exc.filename if hasattr(exc, 'filename') else 'unknown'
+    print(f"警告: 无法访问路径 - {error_path}", file=sys.stderr)
+
+
 def collect_stats(directory):
     if not os.path.isdir(directory):
         print(f"错误: {directory} 不是有效的目录路径", file=sys.stderr)
@@ -24,17 +34,19 @@ def collect_stats(directory):
     extension_sizes = defaultdict(int)
     total_files = 0
 
-    for root, dirs, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory, onerror=handle_walk_error):
         for filename in files:
-            total_files += 1
             file_path = os.path.join(root, filename)
             
             try:
                 file_size = os.path.getsize(file_path)
+                total_files += 1
                 name, ext = os.path.splitext(filename)
                 ext = ext.lower() if ext else '(无后缀)'
                 extension_sizes[ext] += file_size
-            except (OSError, PermissionError):
+            except (OSError, PermissionError) as e:
+                error_path = e.filename if hasattr(e, 'filename') else file_path
+                print(f"警告: 无法读取文件 - {error_path}", file=sys.stderr)
                 continue
 
     total_size = sum(extension_sizes.values())
