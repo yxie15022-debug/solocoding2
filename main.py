@@ -97,7 +97,7 @@ def print_json(stats):
         }
         for ext_info in stats['extensions']
     ]
-    print(json.dumps(json_stats, ensure_ascii=False))
+    print(json.dumps(json_stats, ensure_ascii=False, indent=2))
 
 
 def main():
